@@ -36,6 +36,6 @@ int main(int argc, char *argv[]) {
 
     struct pair *res = pair_of(small_hash__table__find(&table, 100, (void*)(uintptr_t)100));
 
-    printf("%d", res->val);
+    printf("%d\n", res->val);
     return 0;
 }
