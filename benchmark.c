@@ -27,11 +27,11 @@ int main(int argc, char *argv[]) {
     struct small_hash__funcs funcs = SMALL_HASH__FUNCS(prefix__);
     SMALL_HASH__TABLE__INIT_STATIC(&table, &funcs, NULL, anchors);
 
+    struct pair *pairs = malloc(pair_count * sizeof *pairs);
     unsigned i;
     for(i = 0; i < pair_count; i++) {
-        struct pair *pair = malloc(sizeof *pair);
-        *pair = (struct pair){ SMALL_HASH__NODE__EMPTY, i, i };
-        small_hash__table__add(&table, i, &pair->node);
+        pairs[i] = (struct pair){ SMALL_HASH__NODE__EMPTY, i, i };
+        small_hash__table__add(&table, i, &pairs[i].node);
     }
 
     struct pair *res = pair_of(small_hash__table__find(&table, 100, (void*)(uintptr_t)100));
