@@ -1,5 +1,21 @@
 #include "small_hash.h"
 #include <string.h>             /* memset */
+#include <stdlib.h>             /* free */
+
+static void init_internal(
+    small_hash__table *table,
+    struct small_hash__funcs *user_funcs, void *user_arg,
+    unsigned anchors_count,
+    small_hash__anchor anchors[],
+    bool is_dynamic)
+{
+    table->user_funcs = user_funcs;
+    table->user_arg = user_arg;
+    table->is_dynamic = is_dynamic;
+    table->anchors_count = anchors_count;
+    table->anchors = anchors;
+    memset(anchors, 0, anchors_count * sizeof(small_hash__anchor));
+}
 
 void small_hash__table__init_static(
     small_hash__table *table,
@@ -7,11 +23,25 @@ void small_hash__table__init_static(
     unsigned anchors_count,
     small_hash__anchor anchors[])
 {
-    table->user_funcs = user_funcs;
-    table->user_arg = user_arg;
-    table->anchors_count = anchors_count;
-    table->anchors = anchors;
-    memset(anchors, 0, anchors_count * sizeof(small_hash__anchor));
+    init_internal(table, user_funcs, user_arg, anchors_count, anchors, false);
+}
+
+void small_hash__table__init_dynamic(
+    small_hash__table *table,
+    struct small_hash__funcs *user_funcs, void *user_arg,
+    unsigned anchors_count)
+{
+    small_hash__anchor *anchors =
+        malloc(anchors_count * sizeof *anchors);
+    init_internal(table, user_funcs, user_arg, anchors_count, anchors, true);
+}
+
+void small_hash__table__free(small_hash__table *table)
+{
+    if(table->is_dynamic) {
+        free(table->anchors);
+        table->anchors = NULL;
+    }
 }
 
 static small_hash__anchor *anchor_of_hash(small_hash__table *table, small_hash__hash hash)

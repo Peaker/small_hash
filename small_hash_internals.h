@@ -5,6 +5,7 @@ struct small_hash__table {
     struct small_hash__funcs *user_funcs;
     void *user_arg;
 
+    bool is_dynamic;
     unsigned anchors_count;
     small_hash__anchor *anchors;
 };

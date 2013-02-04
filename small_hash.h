@@ -32,6 +32,13 @@ void small_hash__table__init_static(
     small_hash__table__init_static((table), (user_funcs), (user_arg),   \
                                    ARRAY_LEN(anchors_array), (anchors_array))
 
+void small_hash__table__init_dynamic(
+    small_hash__table *,
+    struct small_hash__funcs *user_funcs, void *user_arg,
+    unsigned anchors_count);
+
+void small_hash__table__free(small_hash__table *);
+
 void small_hash__table__add(
     small_hash__table *,
     small_hash__hash, small_hash__node *);
