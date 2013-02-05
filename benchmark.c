@@ -22,10 +22,9 @@ int main(int argc, char *argv[]) {
     long pair_count = atol(argv[1]);
     if(pair_count <= 0) { usage(argv[0]); return -1; }
 
-    small_hash__anchor *anchors = malloc(HASH_SIZE * sizeof *anchors);
     small_hash__table table;
     struct small_hash__funcs funcs = SMALL_HASH__FUNCS(prefix__);
-    SMALL_HASH__TABLE__INIT_STATIC(&table, &funcs, NULL, anchors);
+    small_hash__table__init_dynamic(&table, &funcs, NULL, HASH_SIZE);
 
     struct pair *pairs = malloc(pair_count * sizeof *pairs);
     unsigned i;
