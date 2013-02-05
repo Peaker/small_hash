@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 
     uint64_t t1 = micros();
 
-    for(i = 0; i < 1000000; i++) {
+    for(i = 0; i < pair_count; i++) {
         unsigned randnum = i*0x4A31 % 0x80000;
         struct pair *res = pair_of(
             small_hash__table__find(
