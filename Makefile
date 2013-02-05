@@ -1,5 +1,5 @@
 CC=gcc ${CFLAGS}
-CFLAGS=-O2 -Wall -g -c
+CFLAGS=-O2 -Wall -g -c ${DEFINES}
 LD=gcc
 
 all: example benchmark
