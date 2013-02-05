@@ -5,7 +5,14 @@ struct small_hash__table {
     struct small_hash__funcs *user_funcs;
     void *user_arg;
 
+    unsigned count;
+
     bool is_dynamic;
+    /* If dynamic: */
+    unsigned min_anchors_count;
+    unsigned low_watermark;
+    unsigned high_watermark;
+
     unsigned anchors_count;
     small_hash__anchor *anchors;
 };

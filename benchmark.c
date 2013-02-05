@@ -15,6 +15,10 @@ static bool prefix__match(void *user_arg, const void *key, small_hash__node *nod
     return pair_of(node)->key == (uintptr_t)key;
 }
 
+static small_hash__hash prefix__get_hash(void *user_arg, small_hash__node *node) {
+    return pair_of(node)->key;
+}
+
 static void usage(char *progname) { fprintf(stderr, "Usage: %s <count>\n", progname); }
 
 int main(int argc, char *argv[]) {
@@ -35,6 +39,6 @@ int main(int argc, char *argv[]) {
 
     struct pair *res = pair_of(small_hash__table__find(&table, 100, (void*)(uintptr_t)100));
 
-    printf("%d\n", res->val);
+    if(res) printf("%d\n", res->val);
     return 0;
 }

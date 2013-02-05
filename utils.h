@@ -11,4 +11,7 @@
 #define ARRAY_LEN(arr)    (sizeof (arr) / sizeof *(arr))
 #endif
 
+#define min(a, b)   (((a) <= (b)) ? (a) : (b))
+#define max(a, b)   (((a) >= (b)) ? (a) : (b))
+
 #endif

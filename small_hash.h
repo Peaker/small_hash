@@ -18,27 +18,29 @@ typedef uint32_t small_hash__hash;
 
 struct small_hash__funcs {
     bool (*match_key)(void *user_arg, const void *key, small_hash__node *);
+    small_hash__hash (*get_hash)(void *user_arg, small_hash__node *);
 };
-#define SMALL_HASH__FUNCS(prefix) \
-    (struct small_hash__funcs)    \
-    { & prefix ## match                 \
+#define SMALL_HASH__FUNCS(prefix)               \
+    (struct small_hash__funcs)                  \
+    { & prefix ## match                         \
+    , & prefix ## get_hash                      \
     }
 
 void small_hash__table__init_static(
     small_hash__table *,
     struct small_hash__funcs *user_funcs, void *user_arg,
     unsigned anchors_count, small_hash__anchor *anchors);
-#define SMALL_HASH__TABLE__INIT_STATIC(table, user_funcs, user_arg, anchors_array) \
-    small_hash__table__init_static((table), (user_funcs), (user_arg),   \
-                                   ARRAY_LEN(anchors_array), (anchors_array))
 
 void small_hash__table__init_dynamic(
     small_hash__table *,
     struct small_hash__funcs *user_funcs, void *user_arg,
-    unsigned anchors_count);
+    unsigned min_anchors_count);
 
 void small_hash__table__free(small_hash__table *);
 
+/* hash could be computed via callback call, but passed here anyway to
+ * avoid unnecessary callback roundtrip (gcc doesn't optimize that
+ * out). */
 void small_hash__table__add(
     small_hash__table *,
     small_hash__hash, small_hash__node *);

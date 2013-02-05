@@ -25,9 +25,7 @@ static bool by_name__match(void *user_arg, const void *key, small_hash__node *no
     return 0 == strcmp(user_node->name, key_name);
 }
 
-struct small_hash__funcs by_name_funcs = SMALL_HASH__FUNCS(by_name__);
-
-static small_hash__hash by_name__hash(const char *name)
+static small_hash__hash by_name__hash_name(const char *name)
 {
     small_hash__hash result = 0x12345;
     const char *p;
@@ -38,6 +36,13 @@ static small_hash__hash by_name__hash(const char *name)
     return result;
 }
 
+static small_hash__hash by_name__get_hash(void *dummy, small_hash__node *node)
+{
+    return by_name__hash_name(container_of(node, struct user, by_name_node)->name);
+}
+
+struct small_hash__funcs by_name_funcs = SMALL_HASH__FUNCS(by_name__);
+
 /* By Age: */
 static bool by_age__match(void *user_arg, const void *key, small_hash__node *node)
 {
@@ -46,39 +51,46 @@ static bool by_age__match(void *user_arg, const void *key, small_hash__node *nod
     return user_node->age == age;
 }
 
-struct small_hash__funcs by_age_funcs = SMALL_HASH__FUNCS(by_age__);
-
-static small_hash__hash by_age__hash(unsigned age)
+static small_hash__hash by_age__hash_age(unsigned age)
 {
     return age;
 }
 
+static small_hash__hash by_age__get_hash(void *dummy, small_hash__node *node)
+{
+    return by_age__hash_age(container_of(node, struct user, by_age_node)->age);
+}
+
+struct small_hash__funcs by_age_funcs = SMALL_HASH__FUNCS(by_age__);
+
 static void users__init(struct users *users)
 {
-    SMALL_HASH__TABLE__INIT_STATIC(
+    small_hash__table__init_static(
         &users->by_name_table,
-        &by_name_funcs, NULL, users->by_name_anchors);
-    SMALL_HASH__TABLE__INIT_STATIC(
+        &by_name_funcs, NULL,
+        ARRAY_LEN(users->by_name_anchors), users->by_name_anchors);
+    small_hash__table__init_static(
         &users->by_age_table,
-        &by_age_funcs, NULL, users->by_age_anchors);
+        &by_age_funcs, NULL,
+        ARRAY_LEN(users->by_age_anchors), users->by_age_anchors);
 }
 
 static void users__add(struct users *users, struct user *u)
 {
-    small_hash__table__add(&users->by_name_table, by_name__hash(u->name), &u->by_name_node);
-    small_hash__table__add(&users->by_age_table, by_age__hash(u->age), &u->by_age_node);
+    small_hash__table__add(&users->by_name_table, by_name__hash_name(u->name), &u->by_name_node);
+    small_hash__table__add(&users->by_age_table, by_age__hash_age(u->age), &u->by_age_node);
 }
 
 static void users__del(struct users *users, struct user *u)
 {
-    small_hash__table__del(&users->by_name_table, by_name__hash(u->name), &u->by_name_node);
-    small_hash__table__del(&users->by_age_table, by_age__hash(u->age), &u->by_age_node);
+    small_hash__table__del(&users->by_name_table, by_name__hash_name(u->name), &u->by_name_node);
+    small_hash__table__del(&users->by_age_table, by_age__hash_age(u->age), &u->by_age_node);
 }
 
 static struct user *users__find_by_name(struct users *users, const char *name)
 {
     small_hash__node *node =
-        small_hash__table__find(&users->by_name_table, by_name__hash(name), name);
+        small_hash__table__find(&users->by_name_table, by_name__hash_name(name), name);
     if(!node) return NULL;
     return container_of(node, struct user, by_name_node);
 }
@@ -86,7 +98,7 @@ static struct user *users__find_by_name(struct users *users, const char *name)
 static struct user *users__find_by_age(struct users *users, unsigned age)
 {
     small_hash__node *node =
-        small_hash__table__find(&users->by_age_table, by_age__hash(age), (void *)(uintptr_t)age);
+        small_hash__table__find(&users->by_age_table, by_age__hash_age(age), (void *)(uintptr_t)age);
     if(!node) return NULL;
     return container_of(node, struct user, by_age_node);
 }
