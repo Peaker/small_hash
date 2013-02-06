@@ -92,15 +92,12 @@ static void rehash(small_hash__table *table, unsigned new_anchors_count)
     small_hash__anchor *new_anchors = alloc_anchors(new_anchors_count);
     unsigned i;
     for(i = 0; i < table->anchors_count; i++) {
-        small_hash__node **first_node = &table->anchors[i].first;
-        small_hash__node *node;
-        while(node = *first_node, node) {
+        small_hash__node *node, *next;
+        for(node = table->anchors[i].first; node; node=next) {
+            next = node->next;
             small_hash__hash hash =
                 table->user_funcs->get_hash(table->user_arg, node);
             small_hash__anchor *anchor = &new_anchors[hash % new_anchors_count];
-            /* NOTE: This temporarily does not maintain the doubly
-             * linked list structure */
-            *first_node = node->next;
             insert_to_anchor(anchor, node);
         }
     }
