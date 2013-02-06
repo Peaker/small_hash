@@ -13,9 +13,7 @@ struct user {
 
 struct users {
     small_hash__table by_name_table;
-    small_hash__anchor by_name_anchors[2];
     small_hash__table by_age_table;
-    small_hash__anchor by_age_anchors[2];
 };
 
 /* By Name: */
@@ -66,14 +64,18 @@ struct small_hash__funcs by_age_funcs = SMALL_HASH__FUNCS(by_age__);
 
 static void users__init(struct users *users)
 {
-    small_hash__table__init_static(
+    small_hash__table__init_dynamic(
         &users->by_name_table,
-        &by_name_funcs, NULL,
-        ARRAY_LEN(users->by_name_anchors), users->by_name_anchors);
-    small_hash__table__init_static(
+        &by_name_funcs, NULL, 2);
+    small_hash__table__init_dynamic(
         &users->by_age_table,
-        &by_age_funcs, NULL,
-        ARRAY_LEN(users->by_age_anchors), users->by_age_anchors);
+        &by_age_funcs, NULL, 2);
+}
+
+static void users__fini(struct users *users)
+{
+    small_hash__table__fini(&users->by_name_table);
+    small_hash__table__fini(&users->by_age_table);
 }
 
 static void users__add(struct users *users, struct user *u)
@@ -130,5 +132,7 @@ int main() {
         struct user *u = container_of(node, struct user, by_name_node);
         printf("User: name=%s, age=%d\n", u->name, u->age);
     }
+
+    users__fini(&users);
     return 0;
 }

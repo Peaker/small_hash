@@ -77,13 +77,33 @@ void small_hash__table__init_dynamic(
     set_watermarks(table);
 }
 
-void small_hash__table__free(small_hash__table *table)
+void small_hash__table__fini(small_hash__table *table)
 {
     assert(0 == table->prevent_resizes_count);
     if(table->is_dynamic) {
         free(table->anchors);
         table->anchors = NULL;
     }
+}
+
+/* BFS free of all nodes: */
+void small_hash__table__fini_destroy(
+    small_hash__table *table,
+    void (*free_node)(void *, small_hash__node *), void *arg)
+{
+    while(1) {
+        bool empty = true;
+        unsigned i;
+        for(i = 0; i < table->anchors_count; i++) {
+            small_hash__node *first = table->anchors[i].first;
+            if(!first) continue;
+            empty = false;
+            table->anchors[i].first = first->next;
+            free_node(arg, first);
+        }
+        if(empty) break;
+    }
+    small_hash__table__fini(table);
 }
 
 static small_hash__anchor *anchor_of_hash(small_hash__table *table, small_hash__hash hash)

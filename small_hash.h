@@ -55,7 +55,14 @@ void small_hash__table__init_dynamic(
     struct small_hash__funcs *user_funcs, void *user_arg,
     unsigned min_anchors_count);
 
-void small_hash__table__free(small_hash__table *);
+/* You may call either fini_destroy or fini. fini_destroy hands you
+ * all of the nodes to clean up. You may not use the hash table API in
+ * the callback. */
+void small_hash__table__fini_destroy(
+    small_hash__table *,
+    void (*free_node)(void *arg, small_hash__node *), void *arg);
+
+void small_hash__table__fini(small_hash__table *);
 
 /* hash could be computed via callback call, but passed here anyway to
  * avoid unnecessary callback roundtrip (gcc doesn't optimize that

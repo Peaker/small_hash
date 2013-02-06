@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     for(i = 0; i < pair_count; i++) {
         small_hash__table__del(&table, i, &pairs[i].node);
     }
-    small_hash__table__free(&table);
+    small_hash__table__fini(&table);
 
     uint64_t t3 = get_time_micros();
     printf("insertions: %" PRIu64 "\n"
