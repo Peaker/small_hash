@@ -1,7 +1,7 @@
 #include "small_hash.h"
+#include "get_time_micros.h"
 #include <stdio.h>              /* printf */
 #include <stdlib.h>             /* malloc, abort */
-#include <sys/time.h>           /* gettimeofday */
 #include <inttypes.h>           /* PRI* */
 
 #define HASH_SIZE (1ULL<<16)
@@ -23,16 +23,6 @@ static small_hash__hash prefix__get_hash(void *user_arg, small_hash__node *node)
 
 static void usage(char *progname) { fprintf(stderr, "Usage: %s <count>\n", progname); }
 
-static uint64_t micros() {
-    struct timeval tv;
-    int rc = gettimeofday(&tv, NULL);
-    if(0 != rc) {
-        perror("gettimeofday");
-        abort();
-    }
-    return tv.tv_sec * 1000000 + tv.tv_usec;
-}
-
 int main(int argc, char *argv[]) {
     if(argc != 2) { usage(argv[0]); return -1; }
     long pair_count = atol(argv[1]);
@@ -42,7 +32,7 @@ int main(int argc, char *argv[]) {
     struct small_hash__funcs funcs = SMALL_HASH__FUNCS(prefix__);
     small_hash__table__init_dynamic(&table, &funcs, NULL, 128);
 
-    uint64_t t0 = micros();
+    uint64_t t0 = get_time_micros();
 
     struct pair *pairs = malloc(pair_count * sizeof *pairs);
     unsigned i;
@@ -51,7 +41,7 @@ int main(int argc, char *argv[]) {
         small_hash__table__add(&table, i, &pairs[i].node);
     }
 
-    uint64_t t1 = micros();
+    uint64_t t1 = get_time_micros();
 
     for(i = 0; i < pair_count; i++) {
         unsigned randnum = i*0x4A31 % 0x80000;
@@ -61,14 +51,14 @@ int main(int argc, char *argv[]) {
         if(res && res->val == -1U) printf("%d\n", res->val);
     }
 
-    uint64_t t2 = micros();
+    uint64_t t2 = get_time_micros();
 
     for(i = 0; i < pair_count; i++) {
         small_hash__table__del(&table, i, &pairs[i].node);
     }
     small_hash__table__free(&table);
 
-    uint64_t t3 = micros();
+    uint64_t t3 = get_time_micros();
     printf("insertions: %" PRIu64 "\n"
            "lookups   : %" PRIu64 "\n"
            "deletions : %" PRIu64 "\n"
