@@ -6,6 +6,7 @@ struct small_hash__table {
     void *user_arg;
 
     unsigned count;
+    uint64_t total_rehash_cost;
 
     bool is_dynamic;
     /* If dynamic: */
