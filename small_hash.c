@@ -3,7 +3,6 @@
 #include <string.h>             /* memset */
 #include <stdlib.h>             /* free */
 #include <assert.h>
-#include "get_time_micros.h"
 
 /* Having 1 anchor for each element (on average) is typically not a
  * big deal, it is equivalent to enlarging the elements by a single
@@ -37,7 +36,6 @@ static void init_internal(
     table->count = 0;
     table->expensive_lookup_count = 0;
     table->lookup_count = 0;
-    table->total_rehash_cost = 0;
 }
 
 void small_hash__table__init_static(
@@ -103,7 +101,6 @@ static void insert_to_anchor(small_hash__anchor *anchor, small_hash__node *node)
 
 static void rehash(small_hash__table *table, unsigned new_anchors_count)
 {
-    uint64_t before = get_time_micros();
     assert(table->is_dynamic);
     small_hash__anchor *new_anchors = alloc_anchors(new_anchors_count);
     while(1) {
@@ -126,7 +123,6 @@ static void rehash(small_hash__table *table, unsigned new_anchors_count)
     table->anchors = new_anchors;
     table->anchors_count = new_anchors_count;
     set_watermarks(table);
-    table->total_rehash_cost += get_time_micros() - before;
 }
 
 static void maybe_shrink(small_hash__table *table)
