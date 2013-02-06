@@ -11,8 +11,8 @@
  * overhead we add. */
 #define DESIRED_COUNT_PER_ANCHOR 5
 
-#define SHRINK_FACTOR            4
-#define SHRINK_WATERMARK_FACTOR  4
+#define SHRINK_FACTOR            6
+#define SHRINK_WATERMARK_FACTOR  6
 
 /* Allow expanding the hash table even if it only grew twice too
  * large. The actual trigger is many expensive lookups. */
