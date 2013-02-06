@@ -17,10 +17,17 @@ struct small_hash__table {
 
     unsigned anchors_count;
     small_hash__anchor *anchors;
+
+    unsigned prevent_resizes_count;
 };
 
 struct small_hash__node {
     small_hash__node *prev, *next;
+};
+
+struct small_hash__iter {
+    unsigned next_anchor_index;
+    small_hash__node *next;
 };
 
 #define SMALL_HASH__NODE__EMPTY_INTERNAL   (struct small_hash__node){ NULL, NULL }

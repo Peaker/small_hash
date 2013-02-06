@@ -36,6 +36,7 @@ static void init_internal(
     table->count = 0;
     table->expensive_lookup_count = 0;
     table->lookup_count = 0;
+    table->prevent_resizes_count = 0;
 }
 
 void small_hash__table__init_static(
@@ -78,6 +79,7 @@ void small_hash__table__init_dynamic(
 
 void small_hash__table__free(small_hash__table *table)
 {
+    assert(0 == table->prevent_resizes_count);
     if(table->is_dynamic) {
         free(table->anchors);
         table->anchors = NULL;
@@ -101,7 +103,7 @@ static void insert_to_anchor(small_hash__anchor *anchor, small_hash__node *node)
 
 static void rehash(small_hash__table *table, unsigned new_anchors_count)
 {
-    assert(table->is_dynamic);
+    assert(table->is_dynamic && 0 == table->prevent_resizes_count);
     small_hash__anchor *new_anchors = alloc_anchors(new_anchors_count);
     while(1) {
         bool empty = true;
@@ -127,7 +129,7 @@ static void rehash(small_hash__table *table, unsigned new_anchors_count)
 
 static void maybe_shrink(small_hash__table *table)
 {
-    if(!table->is_dynamic) return;
+    if(!table->is_dynamic || 0 != table->prevent_resizes_count) return;
     if(table->count >= table->low_watermark) return;
     if(table->anchors_count <= table->min_anchors_count) return;
     rehash(table, max(table->anchors_count / SHRINK_FACTOR, table->min_anchors_count));
@@ -164,7 +166,7 @@ void small_hash__table__del(
 
 static inline void report_lookup(small_hash__table *table, unsigned lookup_cost)
 {
-    if(!table->is_dynamic) return;
+    if(!table->is_dynamic || 0 != table->prevent_resizes_count) return;
     if(table->count <= table->high_watermark) return;
     if(lookup_cost < EXPENSIVE_LOOKUP_THRESHOLD) return;
 
@@ -210,9 +212,53 @@ small_hash__node *small_hash__table__find(
     small_hash__table *table,
     small_hash__hash hash, const void *key)
 {
-    if(table->is_dynamic && ++table->lookup_count >= BETWEEN_LOOKUP_REPORT_COUNT) {
+    if(table->is_dynamic && 0 == table->prevent_resizes_count &&
+       ++table->lookup_count >= BETWEEN_LOOKUP_REPORT_COUNT)
+    {
         table->lookup_count = 0;
         return find_and_report(table, hash, key);
     }
     return find(table, hash, key);
+}
+
+void small_hash__iter__init(small_hash__table *table, small_hash__iter *iter)
+{
+    table->prevent_resizes_count++;
+    iter->next_anchor_index = 0;
+    iter->next = NULL;
+}
+
+/* NULL is end of iteration */
+small_hash__node *small_hash__iter__next(small_hash__table *table, small_hash__iter *iter)
+{
+    small_hash__node *next = iter->next;
+    if(next) {
+        iter->next = next->next;
+        return next;
+    }
+
+    if(-1U == iter->next_anchor_index) return NULL;
+
+    unsigned i;
+    for(i = iter->next_anchor_index; i < table->anchors_count; i++) {
+        small_hash__node *first = table->anchors[i].first;
+        if(first) {
+            iter->next_anchor_index = i+1;
+            iter->next = first->next;
+            return first;
+        }
+    }
+
+    iter->next = NULL;
+    iter->next_anchor_index = -1U;
+    small_hash__iter__fini(table, iter);
+    return NULL;
+}
+
+/* fini must be called or it will leak and forever prevent dynamic resizing of
+ * the hash table */
+void small_hash__iter__fini(small_hash__table *table, small_hash__iter *iter)
+{
+    assert(table->prevent_resizes_count > 0);
+    table->prevent_resizes_count--;
 }

@@ -16,6 +16,25 @@ typedef uint32_t small_hash__hash;
 
 #include "utils.h"
 
+/* Iteration is only valid while the node AFTER the one being iterated
+ * is not modified. i.e: You're allowed to delete/insert the node
+ * being iterated, but not arbitrary other nodes.
+ */
+typedef struct small_hash__iter small_hash__iter;
+void small_hash__iter__init(small_hash__table *, small_hash__iter *);
+
+/* NULL is end of iteration */
+small_hash__node *small_hash__iter__next(small_hash__table *, small_hash__iter *);
+
+/* fini must be called on all iterators that are not fully consumed
+ * via next. */
+void small_hash__iter__fini(small_hash__table *, small_hash__iter *);
+
+#define SMALL_HASH__ITER(table, iter, cur_node)     \
+    for(small_hash__iter__init(&(table), &(iter));  \
+        NULL != (cur_node = small_hash__iter__next(&(table), &(iter))); \
+        )
+
 struct small_hash__funcs {
     bool (*match_key)(void *user_arg, const void *key, small_hash__node *);
     small_hash__hash (*get_hash)(void *user_arg, small_hash__node *);

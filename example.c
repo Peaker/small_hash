@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 
 struct user {
     const char *name;
@@ -122,5 +123,12 @@ int main() {
     assert(NULL   == users__find_by_age(&users, 25));
     assert(NULL   == users__find_by_age(&users, 30));
     assert(&yossi == users__find_by_age(&users, 40));
+
+    small_hash__iter i;
+    small_hash__node *node;
+    SMALL_HASH__ITER(users.by_name_table, i, node) {
+        struct user *u = container_of(node, struct user, by_name_node);
+        printf("User: name=%s, age=%d\n", u->name, u->age);
+    }
     return 0;
 }
