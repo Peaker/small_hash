@@ -106,23 +106,27 @@ static void rehash(small_hash__table *table, unsigned new_anchors_count)
     uint64_t before = get_time_micros();
     assert(table->is_dynamic);
     small_hash__anchor *new_anchors = alloc_anchors(new_anchors_count);
-    unsigned i;
-    for(i = 0; i < table->anchors_count; i++) {
-        small_hash__node *node, *next;
-        for(node = table->anchors[i].first; node; node=next) {
-            next = node->next;
+    while(1) {
+        bool empty = true;
+        unsigned i;
+        for(i = 0; i < table->anchors_count; i++) {
+            small_hash__node *first = table->anchors[i].first;
+            if(!first) continue;
+
+            table->anchors[i].first = first->next;
+            if(first->next) empty = false;
+
             small_hash__hash hash =
-                table->user_funcs->get_hash(table->user_arg, node);
-            small_hash__anchor *anchor = &new_anchors[hash % new_anchors_count];
-            insert_to_anchor(anchor, node);
+                table->user_funcs->get_hash(table->user_arg, first);
+            insert_to_anchor(&new_anchors[hash % new_anchors_count], first);
         }
+        if(empty) break;
     }
     free(table->anchors);
     table->anchors = new_anchors;
     table->anchors_count = new_anchors_count;
     set_watermarks(table);
-    uint64_t cost = get_time_micros() - before;
-    table->total_rehash_cost += cost;
+    table->total_rehash_cost += get_time_micros() - before;
 }
 
 static void maybe_shrink(small_hash__table *table)
