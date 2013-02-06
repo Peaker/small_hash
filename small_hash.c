@@ -18,8 +18,9 @@
  * large. The actual trigger is many expensive lookups. */
 #define MIN_EXPAND_WATERMARK_FACTOR  2
 
-#define EXPENSIVE_LOOKUP_THRESHOLD   5
-#define ENLARGE_DUE_TO_EXPENSIVE_LOOKUP_AFTER  20
+#define EXPENSIVE_LOOKUP_THRESHOLD   3
+#define ENLARGE_DUE_TO_EXPENSIVE_LOOKUP_AFTER  2
+#define BETWEEN_LOOKUP_REPORT_COUNT  10
 
 static void init_internal(
     small_hash__table *table,
@@ -35,6 +36,7 @@ static void init_internal(
     table->anchors = anchors;
     table->count = 0;
     table->expensive_lookup_count = 0;
+    table->lookup_count = 0;
     table->total_rehash_cost = 0;
 }
 
@@ -174,7 +176,7 @@ static inline void report_lookup(small_hash__table *table, unsigned lookup_cost)
     rehash(table, new_anchors_count);
 }
 
-small_hash__node *small_hash__table__find(
+static inline small_hash__node *find_and_report(
     small_hash__table *table,
     small_hash__hash hash, const void *key)
 {
@@ -189,4 +191,28 @@ small_hash__node *small_hash__table__find(
     }
     report_lookup(table, lookup_cost);
     return node;
+}
+
+static inline small_hash__node *find(
+    small_hash__table *table, small_hash__hash hash, const void *key)
+{
+    small_hash__anchor *anchor = anchor_of_hash(table, hash);
+    small_hash__node *node;
+    for(node = anchor->first; node; node = node->next) {
+        if(table->user_funcs->match_key(table->user_arg, key, node)) {
+            return node;
+        }
+    }
+    return NULL;
+}
+
+small_hash__node *small_hash__table__find(
+    small_hash__table *table,
+    small_hash__hash hash, const void *key)
+{
+    if(table->is_dynamic && ++table->lookup_count >= BETWEEN_LOOKUP_REPORT_COUNT) {
+        table->lookup_count = 0;
+        return find_and_report(table, hash, key);
+    }
+    return find(table, hash, key);
 }

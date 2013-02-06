@@ -14,6 +14,7 @@ struct small_hash__table {
     unsigned low_watermark;
     unsigned high_watermark;
     unsigned expensive_lookup_count;
+    unsigned lookup_count;
 
     unsigned anchors_count;
     small_hash__anchor *anchors;
