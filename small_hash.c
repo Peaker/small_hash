@@ -9,7 +9,7 @@
  * big deal, it is equivalent to enlarging the elements by a single
  * ptr. We already pay 2 ptrs per element, so it adds 33% to the
  * overhead we add. */
-#define DESIRED_COUNT_PER_ANCHOR 1
+#define DESIRED_COUNT_PER_ANCHOR 5
 
 #define SHRINK_FACTOR            4
 #define SHRINK_WATERMARK_FACTOR  4
@@ -18,7 +18,7 @@
  * large. The actual trigger is many expensive lookups. */
 #define MIN_EXPAND_WATERMARK_FACTOR  2
 
-#define EXPENSIVE_LOOKUP_THRESHOLD   3
+#define EXPENSIVE_LOOKUP_THRESHOLD   7
 #define ENLARGE_DUE_TO_EXPENSIVE_LOOKUP_AFTER  2
 #define BETWEEN_LOOKUP_REPORT_COUNT  10
 
