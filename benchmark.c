@@ -23,6 +23,8 @@ static small_hash__hash prefix__get_hash(void *user_arg, small_hash__node *node)
 
 static void usage(char *progname) { fprintf(stderr, "Usage: %s <count>\n", progname); }
 
+static void destroy(void *arg, small_hash__node *node) {}
+
 int main(int argc, char *argv[]) {
     if(argc != 2) { usage(argv[0]); return -1; }
     long pair_count = atol(argv[1]);
@@ -56,7 +58,7 @@ int main(int argc, char *argv[]) {
     for(i = 0; i < pair_count; i++) {
         small_hash__table__del(&table, i, &pairs[i].node);
     }
-    small_hash__table__fini(&table);
+    small_hash__table__fini_destroy(&table, destroy, NULL);
 
     uint64_t t3 = get_time_micros();
     printf("insertions: %" PRIu64 "\n"
